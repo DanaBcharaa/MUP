@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MAPAPP | Registration</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="style.css">
+
+</head>
+<body>
+    <form id="RegForm">
+ <div class="wrapper" style="height: 800px" >
+    <nav class="nav" >
+        <div class="nav-logo">
+            <p style="font-weight: 100">WELCOME TO MESHUP BUSINESS SIDE</p>
+        </div>
+        <div class="nav-menu" id="navMenu">
+            <ul>
+                <li><a href="pL.html" class="link active">Home</a></li>
+              
+            </ul>
+        </div>
+    </nav>
+
+  
+    <div class="form-box" style="height: 800px">
+        
+        <div class="register-container" id="register">
+            <div class="top">
+			
+<div class="nav-menu" id="navMenu">
+            <ul>
+                <li><a href="pL.html" class="link" style="font-size: small" onclick="login()">Have an account? Login</a></li>
+                
+            </ul>
+        
+        </div>  
+                <header>Sign Up</header>
+            </div>
+			
+            <div class="input-box">
+                <input type="email" class="input-field" placeholder="Email" id="em" required />
+                <i class="bx bx-envelope"></i>
+            </div>
+            <div class="three-forms">
+			
+                <div class="input-box">
+                    <input type="text" class="input-field" placeholder="firstname" id= "firstname" required />
+                    <i class="bx bx-user"></i>
+                </div>
+                <div class="input-box">
+                    <input type="text" class="input-field" placeholder="lastName" id="lastName" required />
+                    <i class="bx bx-user"></i>
+                </div>
+							<div class="input-box">
+                <input type="text" class="input-field" placeholder="Businessname" id="bn" required />
+                <i class="bx bx-building"></i>
+            </div>
+            </div>
+			
+			
+	
+	<div class="two-forms">
+   
+			
+			            <div class="input-box">
+                <input type="text" class="input-field" placeholder="phonenumber" id="ph" required />
+                <i class="bx bx-phone"></i>
+            </div>
+            <div class="input-box">
+                <input type="password" class="input-field" placeholder="Password" id="ps" required />
+                <i class="bx bx-lock-alt"></i>
+            </div>
+            </div>
+
+
+
+            <div class="input-box">
+                <textarea class="input-field" placeholder="bio" id="bio" required></textarea>
+                <i class="bx bx-pen"></i>
+            </div>
+            <div class="input-box">
+                <select class="input-field" style=" color: rgb(117, 115, 115); "  id="category" required>
+                    <option value="" disabled selected>Select a category</option>
+                    <!-- JavaScript will populate this dropdown -->
+                </select>
+            </div>
+            <br/>
+            
+                <div class="input-field" >
+                <label style=" color: rgb(52, 48, 48); "for="duration">Choose Appointment Duration:</label>
+                <span  style=" color: rgb(117, 115, 115); " id="durationValue">3o min</span> <br/>
+                <input type="range" min="30" max="90" step="30" value="60" class="slider" id="duration" required>
+               
+          
+        </div>
+            <br/>
+            <div class="input-box">
+                <input type="submit" class="submit" value="Save" id="submit">
+            </div>
+        </div>
+    </div>
+</div>
+
+</form>
+<script>
+    function showBioForm() {
+        document.getElementById('bioForm').style.display = 'block';
+    }
+</script>
+<script>
+   
+   function myMenuFunction() {
+    var i = document.getElementById("navMenu");
+
+    if(i.className === "nav-menu") {
+        i.className += " responsive";
+    } else {
+        i.className = "nav-menu";
+    }
+   }
+ 
+</script>
+
+<script>
+
+    var a = document.getElementById("loginBtn");
+    var b = document.getElementById("registerBtn");
+    var x = document.getElementById("login");
+    var y = document.getElementById("register");
+
+
+    function register() {
+        x.style.left = "-510px";
+        y.style.right = "5px";
+        a.className = "btn";
+        b.className += " white-btn";
+        x.style.opacity = 0;
+        y.style.opacity = 1;
+    }
+	
+
+
+</script>
+
+
+
+<script type="module">
+    
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+    import { getFirestore, doc, setDoc, collection, getDocs  } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+    import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-auth.js";
+   
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyAlz7YECrCbzug4yHCX7whwzoEs2mpeq1s",
+    authDomain: "meshup-firebase.firebaseapp.com",
+    databaseURL: "https://meshup-firebase-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "meshup-firebase",
+    storageBucket: "meshup-firebase.appspot.com",
+    messagingSenderId: "822562585333",
+    appId: "1:822562585333:web:95b3fab04149b668c3a3bc",
+    measurementId: "G-CYGP3CRJNP"
+    };
+  
+ 
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore();
+    const auth = getAuth(app);
+
+
+    let email= document.getElementById('em');
+let firstname = document.getElementById('firstname');
+let lastName= document.getElementById('lastName');
+let Businessname= document.getElementById('bn');
+let phonenumber= document.getElementById('ph');
+let password= document.getElementById('ps');
+let RegForm= document.getElementById('RegForm');
+
+
+let RegisterUser = evt => {
+    evt.preventDefault();
+    const bio = document.getElementById('bio').value;
+    const category = document.getElementById('category').value;
+    const duration = document.getElementById('duration').value;
+    createUserWithEmailAndPassword(auth, email.value, password.value)
+    .then(async(credentials)=> {
+        var ref = doc(db, 'users/' + credentials.user.uid);
+        await setDoc(ref, {
+            email: email.value,
+            firstname: firstname.value,
+            lastName: lastName.value,
+            Businessname: Businessname.value,
+            phonenumber: phonenumber.value,
+            type: 'business',
+            bio: bio,
+            category: category,
+            duration: duration
+        });
+        RegForm.reset();
+        window.location.replace("pL.html");
+    })
+    .catch((error)=>{
+        console.log(error.code);
+        console.log(error.message);
+        alert(error.message);
+    });
+};
+RegForm.addEventListener('submit', RegisterUser);
+
+
+
+
+async function populateCategoryDropdown() {
+    const categoriesRef = collection(db, 'categories');
+    const categoriesSnapshot = await getDocs(categoriesRef);
+    const categoryDropdown = document.getElementById('category');
+
+    categoriesSnapshot.forEach((doc) => {
+        const categories = doc.data().categories; // Get the "categories" array from the document
+        categories.forEach((category) => { // Loop through each category in the array
+            const option = document.createElement('option');
+            option.text = category;
+            option.value = category;
+            categoryDropdown.add(option);
+        });
+    });
+}
+
+    populateCategoryDropdown();
+
+    function updateDuration() {
+        let durationInput = document.getElementById("duration");
+        let durationValue = document.getElementById("durationValue");
+
+        switch (parseInt(durationInput.value)) {
+            case 30:
+                durationValue.textContent = "30 min";
+                break;
+            case 60:
+                durationValue.textContent = "60 min";
+                break;
+            case 90:
+                durationValue.textContent = "90 min";
+                break;
+            default:
+                durationValue.textContent = "";
+        }
+    }
+    updateDuration();
+document.getElementById("duration").addEventListener("input", updateDuration);
+  </script>
+
+
+</body>
+</html>

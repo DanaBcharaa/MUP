@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MAPAPP | Schedule</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="wrapper">
+        <nav class="nav">
+            <div class="nav-logo">
+                <p style="font-weight: 100">Select your working:</p>
+            </div>
+            <div class="nav-menu" id="navMenu">
+                <ul>
+                    <li><a href="pIcons.html" class="link" onclick="register()">Back</a></li>
+                </ul>
+            </div>  
+            <div class="input-box">
+                <button id="saveScheduleBtn" class="submit">Save Schedule</button>
+            </div>
+        </nav>
+
+        <div id="scheduleTables"></div>
+
+        <script>
+            let scheduleTables = document.getElementById('scheduleTables');
+            let currentTables = {};
+
+            const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+            // Create tables for all days
+            days.forEach(day => createTable(day));
+            async function displaySavedSchedule() {
+    try {
+        const user = auth.currentUser;
+        if (!user) {
+            throw new Error('User is not authenticated.');
+        }
+
+        for (const day of days) {
+            const userScheduleRef = collection(db, 'Schedule', user.uid, day);
+            const userScheduleSnapshot = await getDocs(userScheduleRef);
+
+            if (!currentTables[day]) {
+                createTable(day);
+            }
+
+            const table = currentTables[day];
+
+            userScheduleSnapshot.forEach(doc => {
+                const shiftData = doc.data();
+                const { start, end } = shiftData;
+                const shiftId = doc.id; // Get the unique ID of the shift document
+
+                if (start && end) {
+                    const row = table.insertRow();
+                    const startHourCell = row.insertCell();
+                    const endHourCell = row.insertCell();
+                    const deleteCell = row.insertCell(); // Create a delete cell
+
+                    startHourCell.textContent = start;
+                    endHourCell.textContent = end;
+
+                    const deleteButton = document.createElement('button');
+                    deleteButton.textContent = 'Delete';
+                    deleteButton.addEventListener('click', async () => {
+                        await deleteShift(user.uid, day, shiftId, row);
+                    }); // Pass the shiftId to the deleteShift function
+                    deleteCell.appendChild(deleteButton); // Append the delete button to the delete cell
+                }
+            });
+        }
+
+        console.log('Schedule loaded successfully!');
+    } catch (error) {
+        console.error('Error loading schedule:', error);
+    }
+}
+
+
+async function deleteRow(table, row) {
+    try {
+        const user = auth.currentUser;
+        if (!user) {
+            throw new Error('User is not authenticated.');
+        }
+
+        const day = table.previousElementSibling.textContent;
+        const start = row.cells[0].textContent;
+        const end = row.cells[1].textContent;
+
+        const userScheduleRef = collection(db, 'Schedule', user.uid, day);
+        const querySnapshot = await getDocs(userScheduleRef);
+
+        const shiftsToUpdate = [];
+        let shiftNum = 1;
+        querySnapshot.forEach(doc => {
+            const shiftData = doc.data();
+            if (shiftData.start === start && shiftData.end === end) {
+                deleteDoc(doc.ref);
+            } else {
+                shiftsToUpdate.push({ ref: doc.ref, shiftNum });
+                shiftNum++;
+            }
+        });
+
+        // Update the shift numbers for remaining shifts
+        for (const shift of shiftsToUpdate) {
+            const { ref, shiftNum } = shift;
+            await setDoc(ref, { shiftNum }, { merge: true });
+        }
+
+        console.log('Shift deleted successfully!');
+    } catch (error) {
+        console.error('Error deleting row:', error);
+    }
+}
+
+
+function createTable(day) {
+    let table = document.createElement('table');
+    table.id = day + 'Table';
+    table.style.width = '30%';
+    table.style.marginBottom = '20px';
+    table.style.background = 'linear-gradient(rgba(39,39,39, 0.6), transparent)';
+
+    let row = table.insertRow();
+    let th1 = row.insertCell();
+    let th2 = row.insertCell();
+    let th3 = row.insertCell();
+    th1.innerHTML = 'Start Hour';
+    th2.innerHTML = 'End Hour';
+    th3.innerHTML = 'Delete'; // Add a delete header
+
+    let addRowButton = document.createElement('button');
+    addRowButton.textContent = 'Add Row';
+    addRowButton.addEventListener('click', () => addRow(table));
+
+    table.appendChild(addRowButton);
+
+    let tableTitle = document.createElement('h3');
+    tableTitle.textContent = day;
+    scheduleTables.appendChild(tableTitle);
+    scheduleTables.appendChild(table);
+
+    currentTables[day] = table;
+
+    // Add delete buttons for existing shifts
+    const existingShifts = Array.from(table.getElementsByTagName('tr')).slice(1); // Exclude the header row
+    existingShifts.forEach(row => {
+        let deleteCell = row.insertCell();
+        let deleteButton = document.createElement('button');
+        deleteButton.textContent = 'Delete';
+        deleteButton.addEventListener('click', async () => {
+            const startHour = row.cells[0].textContent;
+            const endHour = row.cells[1].textContent;
+            await deleteShift(user.uid, day, startHour, endHour);
+            table.deleteRow(row.rowIndex);
+        });
+        deleteCell.appendChild(deleteButton);
+    });
+}
+
+            function addRow(table) {
+                let row = table.insertRow();
+                let startHourCell = row.insertCell();
+                let endHourCell = row.insertCell();
+               
+                startHourCell.innerHTML = '<input type="time" placeholder="Start Hour">';
+                endHourCell.innerHTML = '<input type="time" placeholder="End Hour">';
+
+            }
+
+          
+          
+        </script>
+
+        <script type="module">
+            import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+            import { getFirestore, collection, doc, setDoc, getDoc, onSnapshot, query, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+            import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-auth.js";
+
+            const firebaseConfig = {
+    apiKey: "AIzaSyAlz7YECrCbzug4yHCX7whwzoEs2mpeq1s",
+    authDomain: "meshup-firebase.firebaseapp.com",
+    databaseURL: "https://meshup-firebase-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "meshup-firebase",
+    storageBucket: "meshup-firebase.appspot.com",
+    messagingSenderId: "822562585333",
+    appId: "1:822562585333:web:95b3fab04149b668c3a3bc",
+    measurementId: "G-CYGP3CRJNP"
+    };
+
+            const app = initializeApp(firebaseConfig);
+            const db = getFirestore(app);
+            const auth = getAuth(app);
+            const userCreds = JSON.parse(sessionStorage.getItem("user-creds"));
+
+           async function displaySavedSchedule() {
+    const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+    try {
+        const user = auth.currentUser;
+        if (!user) {
+            throw new Error('User is not authenticated.');
+        }
+
+        days.forEach(async (day) => {
+            const userScheduleRef = collection(db, 'Schedule', user.uid, day);
+            const userScheduleSnapshot = await getDocs(userScheduleRef);
+
+            userScheduleSnapshot.forEach(doc => {
+                const shiftData = doc.data();
+                const { start, end } = shiftData;
+
+                if (start && end) {
+                    if (!currentTables[day]) {
+                        createTable(day);
+                    }
+
+                    const table = currentTables[day];
+                    const row = table.insertRow();
+                    const startHourCell = row.insertCell();
+                    const endHourCell = row.insertCell();
+                    startHourCell.textContent = start;
+                    endHourCell.textContent = end;
+
+
+
+                    let deleteCell = row.insertCell();
+
+let deleteButton = document.createElement('button');
+deleteButton.textContent = 'Delete';
+deleteButton.addEventListener('click', () => deleteRow(table, row));
+deleteCell.appendChild(deleteButton);
+                }
+            });
+        });
+
+
+        console.log('Schedule loaded successfully!');
+    } catch (error) {
+       
+    }
+}
+
+            // Call displaySavedSchedule after initializing Firebase
+            displaySavedSchedule();
+
+
+
+            async function deleteRow(table, row) {
+    try {
+        const user = auth.currentUser;
+        if (!user) {
+            throw new Error('User is not authenticated.');
+        }
+
+        const day = table.previousElementSibling.textContent;
+        const start = row.cells[0].textContent;
+        const end = row.cells[1].textContent;
+
+        const userScheduleRef = collection(db, 'Schedule', user.uid, day);
+        const querySnapshot = await getDocs(userScheduleRef);
+
+        querySnapshot.forEach(doc => {
+            const shiftData = doc.data();
+            if (shiftData.start === start && shiftData.end === end) {
+                deleteDoc(doc.ref);
+            }
+        });
+
+        table.deleteRow(row.rowIndex);
+
+        console.log('Shift deleted successfully!');
+        alert('Deleted successfully!');
+    } catch (error) {
+        console.error('Error deleting row:', error);
+    }
+}
+
+
+
+
+
+            const unsubscribe = auth.onAuthStateChanged(user => {
+    if (user) {
+        displaySavedSchedule();
+    } else {
+        // Handle when user is not signed in
+        console.log('User is not signed in.');
+    }
+});
+
+
+
+const saveScheduleBtn = document.getElementById('saveScheduleBtn');
+            saveScheduleBtn.addEventListener('click', saveSchedule);
+
+            async function saveSchedule() {
+                try {
+                    const user = auth.currentUser;
+                    if (!user) {
+                        throw new Error('User is not authenticated.');
+                    }
+
+                    days.forEach(async (day) => {
+                        const startInputs = document.querySelectorAll(`#${day}Table input[type="time"][placeholder="Start Hour"]`);
+                        const endInputs = document.querySelectorAll(`#${day}Table input[type="time"][placeholder="End Hour"]`);
+
+                        for (let i = 0; i < startInputs.length; i++) {
+                            const start = startInputs[i].value;
+                            const end = endInputs[i].value;
+
+                            if (!start || !end) {
+                                continue; // Skip saving if either start or end hour is empty
+                            }
+
+                            const userScheduleRef = collection(db, 'Schedule', user.uid, day);
+                            const shiftNum = (await getDocs(userScheduleRef)).size + 1;
+
+                            await setDoc(doc(userScheduleRef), {
+                                start,
+                                end
+                            });
+
+                            console.log(`Shift saved for ${day}`);
+                            alert(`Saved successfully in ${day}`);
+                        }
+                    });
+
+                    console.log('Schedule saved successfully!');
+                } catch (error) {
+                    console.error('Error saving schedule:', error);
+                }
+            }
+         
+
+        </script>
+        <script>
+            let UserCreds = JSON.parse(sessionStorage.getItem("user-creds"));
+            let UserInfo = JSON.parse(sessionStorage.getItem("user-info"));
+            
+            let CheckCred =() =>{
+              if (!sessionStorage.getItem("user-creds"))
+              window.location.href ='pL.html'
+            
+                else{
+                  GreetHead.innerText = `Welcome ${UserInfo.firstname} ${UserInfo.lastName}!`;
+            MsgHead.innerText = `User with email "${UserCreds.email}" logged in`;
+                }
+            
+            }
+            window.addEventListener('load', CheckCred);
+            
+            </script>
+    </div>
+</body>
+</html>

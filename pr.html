@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale= 1.0">
+    <title>MAPAPP | User Profile</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="style.css">
+</head>
+<style>
+@media (max-width: 768px) {
+
+    .wrap {
+        grid-template-columns: 100%;
+    }
+}
+
+    
+    .form input{
+        width: 100%;
+        border: none;
+        padding: 20px;
+        font-size: 1em;
+        outline: none;
+        margin-bottom: 5px;
+        background: #ddd;
+        border-radius: 10px;
+        box-sizing: border-box;
+        text-transform: capitalize;
+        -webkit-transition: all 0.5s ;
+        -moz-transition: all 0.5s ;
+        -ms-transition: all 0.5s ;
+        -o-transition: all 0.5s ;
+        transition: all 0.5s ;
+    }
+    .form input:focus{
+        background: #aaa;
+    }
+    .form .form__btn{
+        color: #fff;
+        background: rgb(63, 192, 46);
+    }
+    
+    #map{
+        width: 100%;
+        height: 500px;
+        border-radius: 10px;
+    }
+    
+    #latitude,
+    #longitude {
+        display: none; 
+    }
+    </style>
+<body>
+    
+    <div class="wrapper">
+        <nav class="nav">
+            <div class="nav-logo">
+                
+                
+                
+            </div>
+            <div class="nav-menu" id="navMenu">
+                <ul>
+                    <li><a href="pIcons.html" class="link">Activity</a></li>
+                    <li><a href="pr.html" class="link active">Profile</a></li>
+                    <li><a href="pL.html" class="link">SignOut</a></li>
+                   
+                    
+                </ul>
+            </div>
+        
+        </nav>
+
+  
+        <div class="form-box" style="height: 800px">
+            <div class="input-box">
+                
+                <label for="image">
+                    <img src="" alt="" id="myimg" style="width: 150px; height: 150px; ">
+                </label>
+                
+                <input type="file" id="image" style="display: none;">
+                <button id="savePicture" class="submit" style="width: 70%; height: 40px">Save Picture</button>
+               
+            </div>
+            <div class="profile-container">
+                
+                <header>User Profile</header>
+                <div class="profile-info">
+                  
+                    <p id="firstname"></p>
+                    <p id="lastName"></p>
+                    <p id="businessName"></p>
+                    <p id="phone"></p>
+                    <p id="email"></p>
+                    <p id="bio"></p>
+                    <p id="category"></p>
+                    <p id="duration"></p>
+                    <p id="location"></p>
+                   
+                    
+                </div>
+                
+            </div>
+            
+        </div>
+        
+          
+        <div class="map" id="map" style="width: 25%; height: 200px;">
+            
+            <form id="locationForm">
+                <input type="text" style="width: 50%; height: 50px"   class="input-field" id="latitude" placeholder="Latitude" readonly>
+                <input type="text" style="width: 50%; height: 50px"  class="input-field" id="longitude" placeholder="Longitude" readonly>
+                
+            </form>
+        </div>
+        <button class="submit" style="width: 10%; height: 40px; position:relative;top:-130px;right:250px;" type="button" id="saveLocationBtn">Save Location</button>
+    
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script>
+        let mapOptions = {
+            center: [33.8547, 35.8623], 
+            zoom: 8 
+        }
+
+        let map = new L.map('map', mapOptions);
+
+        let layer = new L.TileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
+        map.addLayer(layer);
+        
+        let marker = null;
+        map.on('click', (event)=> {
+            if(marker !== null){
+                map.removeLayer(marker);
+            }
+        
+            marker = L.marker([event.latlng.lat , event.latlng.lng]).addTo(map);
+        
+            document.getElementById('latitude').value = event.latlng.lat;
+            document.getElementById('longitude').value = event.latlng.lng;
+        })
+
+     
+        window.addEventListener('load', () => {
+            loadLocation();
+        });
+
+        document.getElementById('locationForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const lat = parseFloat(document.getElementById('latitude').value);
+            const lng = parseFloat(document.getElementById('longitude').value);
+            await saveLocation(lat, lng);
+        });
+    </script>
+
+                
+                <script src="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.js"></script>
+                <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.css" />
+ 
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-auth.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-storage.js";
+    import { GeoPoint } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+   
+    const firebaseConfig = {
+    apiKey: "AIzaSyAlz7YECrCbzug4yHCX7whwzoEs2mpeq1s",
+    authDomain: "meshup-firebase.firebaseapp.com",
+    databaseURL: "https://meshup-firebase-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "meshup-firebase",
+    storageBucket: "meshup-firebase.appspot.com",
+    messagingSenderId: "822562585333",
+    appId: "1:822562585333:web:95b3fab04149b668c3a3bc",
+    measurementId: "G-CYGP3CRJNP"
+    };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        const storage = getStorage(app);
+        const userCreds = JSON.parse(sessionStorage.getItem("user-creds"));
+
+// Function to format latitude and longitude
+const formatCoordinate = (coord, direction) => {
+    const absoluteCoord = Math.abs(coord);
+    const degrees = Math.floor(absoluteCoord);
+    const minutes = Math.floor((absoluteCoord - degrees) * 60);
+    const seconds = Math.round(((absoluteCoord - degrees) * 60 - minutes) * 60);
+
+    return `${degrees}°${minutes}′${seconds}″${direction}`;
+};
+
+// Function to save location to Firestore
+// Define marker outside the functions
+
+
+
+// Function to save location to Firestore
+const saveLocation = async (lat, lng) => {
+    if (isNaN(lat) || isNaN(lng)) {
+        console.error('Invalid latitude or longitude value.');
+        return;
+    }
+
+    try {
+        const userRef = doc(db, 'users', userCreds.uid);
+        const geoPoint = new GeoPoint(lat, lng);
+        await setDoc(userRef, {
+           location: geoPoint
+        }, { merge: true });
+        console.log('Location saved in Firestore.');
+        alert('Location saved successfully! Reload to view');
+
+        // Update the map marker
+        if (marker !== null) {
+            map.removeLayer(marker);
+        }
+        marker = L.marker([lat, lng]).addTo(map);
+    } catch (error) {
+        console.error('Error saving location:', error);
+        alert('Error saving location. Please try again.');
+    }
+};
+
+const loadLocation = async () => {
+    try {
+        const userRef = doc(db, 'users', userCreds.uid);
+        const docSnap = await getDoc(userRef);
+        const userData = docSnap.data();
+        if (userData && userData.location) {
+            const lat = userData.location.latitude;
+            const lng = userData.location.longitude;
+            marker = L.marker([lat, lng]).addTo(map);
+            map.setView([lat, lng], 12); // Set the view to the saved location
+            document.getElementById('latitude').value = lat;
+            document.getElementById('longitude').value = lng;
+            
+            // Format and display the location string
+            const formattedLocation = `${formatCoordinate(lat, lat >= 0 ? 'N' : 'S')} ${formatCoordinate(lng, lng >= 0 ? 'E' : 'W')}`;
+            document.getElementById('location').textContent = `Location: ${formattedLocation}`;
+        }
+    } catch (error) {
+        console.error('Error loading location:', error);
+    }
+};
+
+// Call loadLocation when the page loads
+window.addEventListener('load', () => {
+    loadLocation();
+});
+
+// Event listener for the location form submission
+document.getElementById('saveLocationBtn').addEventListener('click', () => {
+    const lat = parseFloat(document.getElementById('latitude').value);
+    const lng = parseFloat(document.getElementById('longitude').value);
+    saveLocation(lat, lng);
+});
+
+
+
+        const savePictureBtn = document.getElementById('savePicture');
+        savePictureBtn.addEventListener('click', async () => {
+            const file = document.getElementById('image').files[0];
+            await saveImage(file);
+           
+        });
+
+        const getUserData = async () => {
+    try {
+        const docRef = doc(db, 'users', userCreds.uid);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+            const userData = docSnap.data();
+            document.getElementById('firstname').textContent = `First Name: ${userData.firstname}`;
+            document.getElementById('lastName').textContent = `Last Name: ${userData.lastName}`;
+            document.getElementById('businessName').textContent = `Business Name: ${userData.Businessname}`;
+            document.getElementById('phone').textContent = `Phone: ${userData.phonenumber}`;
+            document.getElementById('email').textContent = `Email: ${userData.email}`;
+            document.getElementById('bio').textContent = `Bio: ${userData.bio}`;
+            document.getElementById('category').textContent = `Category: ${userData.category}`;
+            document.getElementById('duration').textContent = `Duration: ${userData.duration}`;
+        } else {
+            console.log('No such document!');
+        }
+    } catch (error) {
+        console.error('Error getting user data:', error);
+    }
+};
+
+
+    
+getUserData();
+
+
+const saveImage = async (file) => {
+    const storageRef = ref(storage, `profile_images/${userCreds.uid}/profile.jpg`);
+    try {
+        await uploadBytes(storageRef, file);
+        alert('Image saved successfully!'); // Display success alert
+    } catch (error) {
+        console.error('Error saving image:', error);
+        alert('Error saving image. Please try again.'); // Display error alert
+    }
+};
+
+const getImageURL = async () => {
+    const storageRef = ref(storage, `profile_images/${userCreds.uid}/profile.jpg`);
+    const url = await getDownloadURL(storageRef);
+    return url;
+};
+
+// Display the selected image before saving
+const displaySelectedImage = () => {
+    const file = document.getElementById('image').files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('myimg').src = e.target.result;
+            document.getElementById('myimg').style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    }
+};
+
+// Call displaySelectedImage when a file is selected
+document.getElementById('image').addEventListener('change', displaySelectedImage);
+
+// Display the saved image when the user logs in
+const displayImage = async () => {
+    const storageRef = ref(storage, `profile_images/${userCreds.uid}/profile.jpg`);
+    try {
+        const url = await getDownloadURL(storageRef);
+        document.getElementById('myimg').src = url;
+    } catch (error) {
+        console.error('Error loading image:', error);
+        // You can set a default image here if needed
+        document.getElementById('myimg').src = 'C:\\Users\\dell\\Desktop\\pics\\pic.jpg';
+    }
+};
+
+// Call displayImage when the page loads
+window.addEventListener('load', () => {
+    displayImage();
+});
+
+    </script>
+    <script>
+        let UserCreds = JSON.parse(sessionStorage.getItem("user-creds"));
+        let UserInfo = JSON.parse(sessionStorage.getItem("user-info"));
+        
+        let CheckCred =() =>{
+          if (!sessionStorage.getItem("user-creds"))
+          window.location.href ='pL.html'
+        
+            else{
+              GreetHead.innerText = `Welcome ${UserInfo.firstname} ${UserInfo.lastName}!`;
+        MsgHead.innerText = `User with email "${UserCreds.email}" logged in`;
+            }
+        
+        }
+        window.addEventListener('load', CheckCred);
+        
+        </script>
+</body>
+</html>

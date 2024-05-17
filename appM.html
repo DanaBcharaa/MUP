@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html>
+<head>   
+ 
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js"></script>
+  <title>Appointments</title>
+  <style>
+    body {
+      background-color: rgba(250, 178, 101, 0.8);
+}
+    table {
+      border: 2px solid #b05f04;
+      background-color: #fae4c4;
+      border-collapse: collapse;
+
+    }
+    th {
+      border: 2px solid #000000;
+      background-color: #e09f4f;
+      border-collapse: collapse;
+
+    }
+    td {
+      border: 2px solid #b05f04;
+      background-color:#fed4a1;
+      border-collapse: collapse;
+
+    }
+
+    #calendar {
+        width: 400px;
+        height: 270px;
+        background-color: #f2c99a;
+        position: absolute;
+        bottom: 10px;
+        right: 10px;
+      }
+    
+    h11{
+   
+      position: fixed;
+    top: 0;
+    display: flex;
+    justify-content: space-around;
+    width: 100%;
+    height: 50px;
+    line-height: 100px;
+    background: linear-gradient(rgba(39,39,39, 0.6), transparent);
+ 
+   color: #fff;
+    padding-bottom: 15px;
+   
+}
+.clickable-text {
+      color: rgb(26, 25, 24);
+      font-weight: bold;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .clickable-text:hover {
+      text-decoration: underline;
+    }
+
+    .b{
+      color: rgb(255, 255, 255);
+      font-weight: bold;
+      cursor: pointer;
+      text-decoration: none;
+      font-size: 20px;
+    }
+    .b:hover {
+      text-decoration: underline;
+    }
+
+
+    .done-button {
+      font-size: 15px;
+    font-weight: 500;
+    color: black;
+    height: 23px;
+    width:flex;
+    border: none;
+    border-radius: 30px;
+    outline: none;
+    background: rgba(236, 154, 67, 0.8);
+    cursor: pointer;
+    transition: .3s ease-in-out;
+    }
+
+    .done-button:hover {
+      background: rgba(255, 255, 255, 0.5);
+    box-shadow: 1px 5px 7px 1px rgba(0, 0, 0, 0.2);
+    }
+  </style>
+</head>
+<body>
+
+      <p><a href="pIcons.html" class="b"style="position:relative;top:50px;right:-900px;">Back</a></p>
+   
+  <h11 style="font-size: 24px;">Appointments</h11>
+  <br/>
+  <h2>Requested appointments</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>User Name</th> 
+        <th>User Email</th>
+        <th>DateTime</th>
+        <th>Comments</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="appointmentsTableBody"></tbody>
+  </table>
+
+  <h2>Accepted Appointments</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>User Name</th> 
+        <th>User Email</th>
+        <th>DateTime</th>
+        <th>Comments</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="acceptedAppointmentsTableBody"></tbody>
+  </table>
+
+  <h2>Declined Appointments</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>User Name</th> 
+        <th>User Email</th>
+        <th>DateTime</th>
+        <th>Comments</th>
+      </tr>
+    </thead>
+    <tbody id="declinedAppointmentsTableBody"></tbody>
+  </table>
+
+  <h2>Done Appointments</h2>
+  <table>
+      <thead>
+          <tr>
+              <th>User Name</th>
+              <th>User Email</th>
+              <th>DateTime</th>
+              <th>Comments</th>
+          </tr>
+      </thead>
+      <tbody id="doneAppointmentsTableBody"></tbody>
+  </table>
+  <div id="calendar"></div>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+    import { getFirestore, collection, getDocs, deleteDoc, doc, setDoc, getDoc, query, where } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+    
+ 
+ 
+    const firebaseConfig = {
+      apiKey: "AIzaSyAlz7YECrCbzug4yHCX7whwzoEs2mpeq1s",
+    authDomain: "meshup-firebase.firebaseapp.com",
+    databaseURL: "https://meshup-firebase-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "meshup-firebase",
+    storageBucket: "meshup-firebase.appspot.com",
+    messagingSenderId: "822562585333",
+    appId: "1:822562585333:web:95b3fab04149b668c3a3bc",
+    measurementId: "G-CYGP3CRJNP"
+    };
+
+
+
+   
+
+
+    function formatDateTimeToNearestDayAndTime(dateTime) {
+      let date;
+  if (dateTime instanceof Date) {
+    date = dateTime;
+  } else if (dateTime && dateTime.toDate) {
+    date = dateTime.toDate();
+  } else {
+    return 'Invalid date';
+  }
+
+  const formattedDate = date.toLocaleString([], { month: 'numeric', day: 'numeric' });
+  const formattedTime = date.toLocaleString([], { hour: 'numeric', minute: 'numeric', hour12: true });
+
+  return `${formattedDate}, ${formattedTime}`;
+}
+
+
+function sortAppointmentsByDateTime(appointments) {
+  return appointments.sort((a, b) => {
+    const dateA = a.data().dateTime.toDate();
+    const dateB = b.data().dateTime.toDate();
+    return dateA - dateB;
+  });
+}
+
+const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        let userId;
+        let userDataMap = new Map();
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                userId = user.uid;
+                await fetchAllUserData();
+                const appointmentsCollection = collection(db, `appointments/${userId}/appointments`);
+                const appointmentsTableBody = document.getElementById('appointmentsTableBody');
+                const acceptedAppointmentsTableBody = document.getElementById('acceptedAppointmentsTableBody');
+                const declinedAppointmentsTableBody = document.getElementById('declinedAppointmentsTableBody');
+                const doneAppointmentsTableBody = document.getElementById('doneAppointmentsTableBody');
+                fetchAndPopulateDoneAppointments();
+                appointmentsTableBody.innerHTML = '';
+                acceptedAppointmentsTableBody.innerHTML = '';
+                declinedAppointmentsTableBody.innerHTML = '';
+                doneAppointmentsTableBody.innerHTML = '';
+
+                async function fetchAllUserData() {
+                    try {
+                        const usersCollection = collection(db, "users");
+                        const usersSnapshot = await getDocs(usersCollection);
+
+                        usersSnapshot.forEach((doc) => {
+                            const userData = doc.data();
+                            userDataMap.set(doc.id, {
+                                userId: doc.id,
+                                email: userData.email,
+                                firstname: userData.firstname,
+                                lastName: userData.lastName,
+                                phoneNumber: userData.phoneNumber,
+                                type: userData.type
+                            });
+                            console.log(`User data retrieved for ${doc.id}:`, userData);
+                        });
+
+                        console.log("User data fetched successfully");
+                    } catch (error) {
+                        console.error("Error fetching user data:", error);
+                    }
+                }
+                async function fetchAndPopulateDoneAppointments() {
+  try {
+    const appointmentsCollection = collection(db, `appointments/${userId}/appointments`);
+    const doneAppointmentsQuery = query(appointmentsCollection, where("status", "==", "done"));
+    const querySnapshot = await getDocs(doneAppointmentsQuery);
+    const sortedAppointments = sortAppointmentsByDateTime(querySnapshot.docs);
+    sortedAppointments.forEach((doc) => {
+      const data = doc.data();
+      addRowToDoneTable(data, doc.id);
+    });
+  } catch (error) {
+    console.error('Error fetching done appointments:', error);
+  }
+}
+                // Fetch pending appointments
+                const pendingAppointmentsQuery = query(appointmentsCollection, where("status", "==", "pending"));
+                getDocs(pendingAppointmentsQuery).then((querySnapshot) => {
+                    const sortedAppointments = sortAppointmentsByDateTime(querySnapshot.docs);
+                    sortedAppointments.forEach(async (doc) => {
+                        const data = doc.data();
+                        const row = appointmentsTableBody.insertRow();
+                        row.id = doc.id;
+
+                        const userCell = row.insertCell(0);
+                        const emailCell = row.insertCell(1);
+                        const userData = userDataMap.get(data.userid);
+                        let fullName;
+                        let email = '';
+                        if (userData) {
+                            fullName = `${userData.firstname} ${userData.lastName}`;
+                            email = userData.email || '';
+                        }
+                        userCell.innerHTML = `<span class="clickable-text">${fullName}</span>`;
+                        emailCell.innerText = email;
+
+                        const dateTimeCell = row.insertCell(2);
+                        if (data.dateTime && data.dateTime.toDate) {
+                            dateTimeCell.innerText = formatDateTimeToNearestDayAndTime(data.dateTime);
+                        } else {
+                            dateTimeCell.innerText = 'Invalid date';
+                        }
+
+                        const commentsCell = row.insertCell(3);
+                        commentsCell.innerText = data.comments;
+
+                        userCell.addEventListener('click', () => {
+                            const fullUserData = userDataMap.get(data.userid);
+                            if (fullUserData) {
+                                const { firstname, lastName, phoneNumber, type } = fullUserData;
+                                const userDetails = `Name: ${firstname} ${lastName}\nPhone Number: ${phoneNumber}\nType: ${type}`;
+                                alert(userDetails);
+                            } else {
+                                alert('User data not found');
+                            }
+                        });
+
+                        const actionsCell = row.insertCell(4);
+
+                        const acceptButton = document.createElement('button');
+                        acceptButton.innerText = 'Accept';
+                        acceptButton.classList.add('done-button');
+                        acceptButton.onclick = () => acceptAppointment(doc, data.userid);
+                        const declineButton = document.createElement('button');
+                        declineButton.innerText = 'Decline';
+                        declineButton.classList.add('done-button');
+                        declineButton.onclick = () => declineAppointment(doc, data.userid);
+                        actionsCell.appendChild(acceptButton);
+                        actionsCell.appendChild(declineButton);
+                    });
+                }).catch((error) => {
+                    console.error('Error fetching appointments:', error);
+                });
+
+                // Fetch accepted appointments
+                const acceptedAppointmentsQuery = query(appointmentsCollection, where("status", "==", "accepted"));
+                getDocs(acceptedAppointmentsQuery).then((querySnapshot) => {
+                    const sortedAppointments = sortAppointmentsByDateTime(querySnapshot.docs);
+                    sortedAppointments.forEach((doc) => {
+                        const data = doc.data();
+                        const row = acceptedAppointmentsTableBody.insertRow();
+row.id = doc.id;
+
+const userCell = row.insertCell(0);
+                    const emailCell = row.insertCell(1);
+                    const userData = userDataMap.get(data.userid);
+                    let fullName;
+                    let email = '';
+                    if (userData) {
+                        fullName = `${userData.firstname} ${userData.lastName}`;
+                        email = userData.email || '';
+                    }
+                    userCell.innerHTML = `<span class="clickable-text">${fullName}</span>`;
+                    emailCell.innerText = email;
+
+                    const dateTimeCell = row.insertCell(2);
+                    if (data.dateTime && data.dateTime.toDate) {
+                        dateTimeCell.innerText = formatDateTimeToNearestDayAndTime(data.dateTime);
+                    } else {
+                        dateTimeCell.innerText = 'Invalid date';
+                    }
+
+                    const commentsCell = row.insertCell(3);
+                    commentsCell.innerText = data.comments;
+
+                    const doneCell = row.insertCell(4);
+                    const doneButton = document.createElement('button');
+                    doneButton.innerText = 'DONE';
+                    doneButton.classList.add('done-button');
+                    doneButton.onclick = () => markAsDone(doc, data.userid);
+                    doneCell.appendChild(doneButton);
+
+                    userCell.addEventListener('click', () => {
+                        const fullUserData = userDataMap.get(data.userid);
+                        if (fullUserData) {
+                            const { firstname, lastName, phoneNumber, type } = fullUserData;
+                            const userDetails = `Name: ${firstname} ${lastName}\nPhone Number: ${phoneNumber}\nType: ${type}`;
+                            alert(userDetails);
+                        } else {
+                            alert('User data not found');
+                        }
+                    });
+                });
+                initializeCalendar(sortedAppointments);
+            }).catch((error) => {
+                console.error('Error fetching accepted appointments:', error);
+            });
+
+            function markAsDone(docSnapshot, userid) {
+                const appointmentsCollection = collection(db, `appointments/${userId}/appointments`);
+                const docRef = docSnapshot.ref;
+
+                setDoc(docRef, {
+                    comments: docSnapshot.data().comments,
+                    dateTime: docSnapshot.data().dateTime,
+                    userid: userid,
+                    status: "done"
+                }, { merge: true }).then(() => {
+                    console.log('Appointment marked as done');
+                    addRowToDoneTable(docSnapshot.data(), docSnapshot.id);
+                    const row = document.getElementById(docSnapshot.id);
+                    if (row) {
+                        row.parentNode.removeChild(row);
+                        
+                    }
+                }).catch((error) => {
+                    console.error('Error marking appointment as done:', error);
+                });
+            }
+
+            function addRowToDoneTable(data, docId) {
+                const row = doneAppointmentsTableBody.insertRow();
+                row.id = docId;
+
+                const userCell = row.insertCell(0);
+                const emailCell = row.insertCell(1);
+                const userData = userDataMap.get(data.userid);
+                let fullName;
+                let email = '';
+                if (userData) {
+                    fullName = `${userData.firstname} ${userData.lastName}`;
+                    email = userData.email || '';
+                }
+                userCell.innerHTML = `<span class="clickable-text">${fullName}</span>`;
+                emailCell.innerText = email;
+
+                const dateTimeCell = row.insertCell(2);
+                if (data.dateTime && data.dateTime.toDate) {
+                    dateTimeCell.innerText = formatDateTimeToNearestDayAndTime(data.dateTime);
+                } else {
+                    dateTimeCell.innerText = 'Invalid date';
+                }
+
+                const commentsCell = row.insertCell(3);
+                commentsCell.innerText = data.comments;
+
+                userCell.addEventListener('click', () => {
+                    const fullUserData = userDataMap.get(data.userid);
+                    if (fullUserData) {
+                        const { firstname, lastName, phoneNumber, type } = fullUserData;
+                        const userDetails = `Name: ${firstname} ${lastName}\nPhone Number: ${phoneNumber}\nType: ${type}`;
+                        alert(userDetails);
+                    } else {
+                        alert('User data not found');
+                    }
+                });
+            }
+            let calendar;
+            function initializeCalendar(events) {
+  var formattedEvents = events.map(event => ({
+    title: 'Appointment',
+    start: event.data().dateTime.toDate(), // Assuming dateTime is a Firestore Timestamp
+    extendedProps: {
+      userid: event.data().userid,
+      comments: event.data().comments
+    }
+  }));
+
+  var calendarEl = document.getElementById('calendar');
+  var calendar = new FullCalendar.Calendar(calendarEl, {
+    initialView: 'dayGridMonth',
+    editable: true,
+    events: formattedEvents,
+    eventClick: function(info) {
+      const eventTime = new Date(info.event.start);
+      const formattedTime = eventTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const userData = userDataMap.get(info.event.extendedProps.userid);
+      const eventDetails = `Time: ${formattedTime}\nName: ${userData.firstname} ${userData.lastName}\nComments: ${info.event.extendedProps.comments}`;
+      alert(eventDetails);
+    },
+    dateClick: function(info) {
+      // Add code to handle date click if needed
+    }
+  });
+  calendar.render();
+}
+
+// Fetch declined appointments
+const declinedAppointmentsQuery = query(appointmentsCollection, where("status", "==", "declined"));
+            getDocs(declinedAppointmentsQuery).then((querySnapshot) => {
+                const sortedAppointments = sortAppointmentsByDateTime(querySnapshot.docs);
+                sortedAppointments.forEach((doc) => {
+                    const data = doc.data();
+                    const row = declinedAppointmentsTableBody.insertRow();
+                    row.id = doc.id;
+
+                    const userCell = row.insertCell(0);
+                    const emailCell = row.insertCell(1);
+                    const userData = userDataMap.get(data.userid);
+                    let fullName;
+                    let email = '';
+                    if (userData) {
+                        fullName = `${userData.firstname} ${userData.lastName}`;
+                        email = userData.email || '';
+                    }
+                    userCell.innerHTML = `<span class="clickable-text">${fullName}</span>`;
+                    emailCell.innerText = email;
+
+                    const dateTimeCell = row.insertCell(2);
+                    if (data.dateTime && data.dateTime.toDate) {
+                        dateTimeCell.innerText = formatDateTimeToNearestDayAndTime(data.dateTime);
+                    } else {
+                        dateTimeCell.innerText = 'Invalid date';
+                    }
+
+                    const commentsCell = row.insertCell(3);
+                    commentsCell.innerText = data.comments;
+
+                    userCell.addEventListener('click', () => {
+                        const fullUserData = userDataMap.get(data.userid);
+                        if (fullUserData) {
+                            const { firstname, lastName, phoneNumber, type } = fullUserData;
+                            const userDetails = `Name: ${firstname} ${lastName}\nPhone Number: ${phoneNumber}\nType: ${type}`;
+                            alert(userDetails);
+                        } else {
+                            alert('User data not found');
+                        }
+                    });
+                });
+            }).catch((error) => {
+                console.error('Error fetching declined appointments:', error);
+            });
+        } else {
+            console.log('User not logged in.');
+        }
+    });
+
+async function deleteRow(table, row) {
+        try {
+            const user = auth.currentUser;
+            if (!user) {
+                throw new Error('User is not authenticated.');
+            }
+
+            const docId = row.id; // Assuming the row id is set to the document ID
+            const appointmentsCollection = collection(db, `appointments/${userId}/appointments`);
+
+            // Check if the document exists before attempting deletion
+            const docSnapshot = await getDoc(doc(appointmentsCollection, docId));
+            if (!docSnapshot.exists()) {
+                throw new Error('Document does not exist.');
+            }
+
+            // Delete the document
+            await deleteDoc(doc(appointmentsCollection, docId));
+
+            // Remove the corresponding row from the table
+            row.parentNode.removeChild(row);
+            console.log('Row deleted successfully!');
+        } catch (error) {
+            console.error('Error deleting row:', error);
+        }
+    }
+
+    function acceptAppointment(docSnapshot, userid) {
+        const appointmentsCollection = collection(db, `appointments/${userId}/appointments`);
+        const docRef = docSnapshot.ref;
+
+        setDoc(docRef, {
+            comments: docSnapshot.data().comments,
+            dateTime: docSnapshot.data().dateTime,
+            userid: userid,
+            status: "accepted"
+        }, { merge: true }).then(() => {
+            console.log('Appointment accepted');
+            const row = document.getElementById(docSnapshot.id);
+            if (row) {
+                row.parentNode.removeChild(row);
+            }
+            addRowToAcceptedTable(docSnapshot.data(), docSnapshot.id);
+            
+        }).catch((error) => {
+            console.error('Error accepting appointment:', error);
+        });
+    }
+
+    function addRowToAcceptedTable(data, docId) {
+        const row = acceptedAppointmentsTableBody.insertRow();
+        row.id = docId;
+
+        const userCell = row.insertCell(0);
+        const emailCell = row.insertCell(1);
+        const userData = userDataMap.get(data.userid);
+        let fullName;
+        let email = '';
+        if (userData) {
+            fullName = `${userData.firstname} ${userData.lastName}`;
+            email = userData.email || '';
+        }
+        userCell.innerHTML = `<span class="clickable-text">${fullName}</span>`;
+        emailCell.innerText = email;
+
+        const dateTimeCell = row.insertCell(2);
+        if (data.dateTime && data.dateTime.toDate) {
+            dateTimeCell.innerText = formatDateTimeToNearestDayAndTime(data.dateTime);
+        } else {
+            dateTimeCell.innerText = 'Invalid date';
+        }
+
+        const commentsCell = row.insertCell(3);
+        commentsCell.innerText = data.comments;
+
+        const doneCell = row.insertCell(4);
+        const doneButton = document.createElement('button');
+        doneButton.innerText = 'DONE';
+        doneButton.classList.add('done-button');
+        doneButton.onclick = () => markAsDone(doc(appointmentsCollection, docId), data.userid);
+        doneCell.appendChild(doneButton);
+
+        userCell.addEventListener('click', () => {
+            const fullUserData = userDataMap.get(data.userid);
+            if (fullUserData) {
+                const { firstname, lastName, phoneNumber, type } = fullUserData;
+                const userDetails = `Name: ${firstname} ${lastName}\nPhone Number: ${phoneNumber}\nType: ${type}`;
+                alert(userDetails);
+            } else {
+                alert('User data not found');
+            }
+        });
+    }
+
+    function declineAppointment(docSnapshot, userid) {
+        const appointmentsCollection = collection(db, `appointments/${userId}/appointments`);
+        const docRef = docSnapshot.ref;
+
+        setDoc(docRef, {
+            comments: docSnapshot.data().comments,
+            dateTime: docSnapshot.data().dateTime,
+            userid: userid,
+            status: "declined"
+        }, { merge: true }).then(() => {
+            console.log('Appointment declined');
+            const row = document.getElementById(docSnapshot.id);
+            if (row) {
+                row.parentNode.removeChild(row);
+            }
+            addRowToDeclinedTable(docSnapshot.data(), docSnapshot.id);
+        }).catch((error) => {
+            console.error('Error declining appointment:', error);
+        });
+    }
+    
+
+    function addRowToDeclinedTable(data, docId) {
+        const row = declinedAppointmentsTableBody.insertRow();
+        row.id = docId;
+
+        const userCell = row.insertCell(0);
+        const emailCell = row.insertCell(1);
+        const userData = userDataMap.get(data.userid);
+        let fullName;
+        let email = '';
+        if (userData) {
+            fullName = `${userData.firstname} ${userData.lastName}`;
+            email = userData.email || '';
+        }
+        userCell.innerHTML = `<span class="clickable-text">${fullName}</span>`;
+        emailCell.innerText = email;
+
+        const dateTimeCell = row.insertCell(2);
+        if (data.dateTime && data.dateTime.toDate) {
+            dateTimeCell.innerText = formatDateTimeToNearestDayAndTime(data.dateTime);
+        } else {
+            dateTimeCell.innerText = 'Invalid date';
+        }
+
+        const commentsCell = row.insertCell(3);
+        commentsCell.innerText = data.comments;
+
+        userCell.addEventListener('click', () => {
+            const fullUserData = userDataMap.get(data.userid);
+            if (fullUserData) {
+                const { firstname, lastName, phoneNumber, type } = fullUserData;
+                const userDetails = `Name: ${firstname} ${lastName}\nPhone Number: ${phoneNumber}\nType: ${type}`;
+                alert(userDetails);
+            } else {
+                alert('User data not found');
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        var calendarEl = document.getElementById('calendar');
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            editable: true,
+            events: [], // Initialize with an empty array
+            eventClick: function(info) {
+                const eventDetails = `User ID: ${info.event.extendedProps.userid}\nComments: ${info.event.extendedProps.comments}`;
+                alert(eventDetails);
+            },
+            dateClick: function(info) {
+                // ...
+            }
+        });
+        calendar.render();
+    });
+</script>
+<script>
+    let UserCreds = JSON.parse(sessionStorage.getItem("user-creds"));
+    let UserInfo = JSON.parse(sessionStorage.getItem("user-info"));
+    
+    let CheckCred =() =>{
+      if (!sessionStorage.getItem("user-creds"))
+      window.location.href ='pL.html'
+    
+        else{
+          GreetHead.innerText = `Welcome ${UserInfo.firstname} ${UserInfo.lastName}!`;
+    MsgHead.innerText = `User with email "${UserCreds.email}" logged in`;
+        }
+    
+    }
+    window.addEventListener('load', CheckCred);
+    
+    </script>
+
+</body>
+</html> 
