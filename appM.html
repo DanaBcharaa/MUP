@@ -233,7 +233,7 @@ const app = initializeApp(firebaseConfig);
                             userDataMap.set(doc.id, {
                                 userId: doc.id,
                                 email: userData.email,
-                                firstname: userData.firstname,
+                                firstName: userData.firstName,
                                 lastName: userData.lastName,
                                 phoneNumber: userData.phoneNumber,
                                 type: userData.type
@@ -275,7 +275,7 @@ const app = initializeApp(firebaseConfig);
                         let fullName;
                         let email = '';
                         if (userData) {
-                            fullName = `${userData.firstname} ${userData.lastName}`;
+                            fullName = `${userData.firstName} ${userData.lastName}`;
                             email = userData.email || '';
                         }
                         userCell.innerHTML = `<span class="clickable-text">${fullName}</span>`;
@@ -294,8 +294,8 @@ const app = initializeApp(firebaseConfig);
                         userCell.addEventListener('click', () => {
                             const fullUserData = userDataMap.get(data.userid);
                             if (fullUserData) {
-                                const { firstname, lastName, phoneNumber, type } = fullUserData;
-                                const userDetails = `Name: ${firstname} ${lastName}\nPhone Number: ${phoneNumber}\nType: ${type}`;
+                                const { firstName, lastName, phoneNumber, type } = fullUserData;
+                                const userDetails = `Name: ${firstName} ${lastName}\nPhone Number: ${phoneNumber}\nType: ${type}`;
                                 alert(userDetails);
                             } else {
                                 alert('User data not found');
@@ -334,7 +334,7 @@ const userCell = row.insertCell(0);
                     let fullName;
                     let email = '';
                     if (userData) {
-                        fullName = `${userData.firstname} ${userData.lastName}`;
+                        fullName = `${userData.firstName} ${userData.lastName}`;
                         email = userData.email || '';
                     }
                     userCell.innerHTML = `<span class="clickable-text">${fullName}</span>`;
@@ -360,8 +360,8 @@ const userCell = row.insertCell(0);
                     userCell.addEventListener('click', () => {
                         const fullUserData = userDataMap.get(data.userid);
                         if (fullUserData) {
-                            const { firstname, lastName, phoneNumber, type } = fullUserData;
-                            const userDetails = `Name: ${firstname} ${lastName}\nPhone Number: ${phoneNumber}\nType: ${type}`;
+                            const { firstName, lastName, phoneNumber, type } = fullUserData;
+                            const userDetails = `Name: ${firstName} ${lastName}\nPhone Number: ${phoneNumber}\nType: ${type}`;
                             alert(userDetails);
                         } else {
                             alert('User data not found');
@@ -405,7 +405,7 @@ const userCell = row.insertCell(0);
                 let fullName;
                 let email = '';
                 if (userData) {
-                    fullName = `${userData.firstname} ${userData.lastName}`;
+                    fullName = `${userData.firstName} ${userData.lastName}`;
                     email = userData.email || '';
                 }
                 userCell.innerHTML = `<span class="clickable-text">${fullName}</span>`;
@@ -424,8 +424,8 @@ const userCell = row.insertCell(0);
                 userCell.addEventListener('click', () => {
                     const fullUserData = userDataMap.get(data.userid);
                     if (fullUserData) {
-                        const { firstname, lastName, phoneNumber, type } = fullUserData;
-                        const userDetails = `Name: ${firstname} ${lastName}\nPhone Number: ${phoneNumber}\nType: ${type}`;
+                        const { firstName, lastName, phoneNumber, type } = fullUserData;
+                        const userDetails = `Name: ${firstName} ${lastName}\nPhone Number: ${phoneNumber}\nType: ${type}`;
                         alert(userDetails);
                     } else {
                         alert('User data not found');
@@ -452,7 +452,7 @@ const userCell = row.insertCell(0);
       const eventTime = new Date(info.event.start);
       const formattedTime = eventTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       const userData = userDataMap.get(info.event.extendedProps.userid);
-      const eventDetails = `Time: ${formattedTime}\nName: ${userData.firstname} ${userData.lastName}\nComments: ${info.event.extendedProps.comments}`;
+      const eventDetails = `Time: ${formattedTime}\nName: ${userData.firstName} ${userData.lastName}\nComments: ${info.event.extendedProps.comments}`;
       alert(eventDetails);
     },
     dateClick: function(info) {
@@ -477,7 +477,7 @@ const declinedAppointmentsQuery = query(appointmentsCollection, where("status", 
                     let fullName;
                     let email = '';
                     if (userData) {
-                        fullName = `${userData.firstname} ${userData.lastName}`;
+                        fullName = `${userData.firstName} ${userData.lastName}`;
                         email = userData.email || '';
                     }
                     userCell.innerHTML = `<span class="clickable-text">${fullName}</span>`;
@@ -496,8 +496,8 @@ const declinedAppointmentsQuery = query(appointmentsCollection, where("status", 
                     userCell.addEventListener('click', () => {
                         const fullUserData = userDataMap.get(data.userid);
                         if (fullUserData) {
-                            const { firstname, lastName, phoneNumber, type } = fullUserData;
-                            const userDetails = `Name: ${firstname} ${lastName}\nPhone Number: ${phoneNumber}\nType: ${type}`;
+                            const { firstName, lastName, phoneNumber, type } = fullUserData;
+                            const userDetails = `Name: ${firstName} ${lastName}\nPhone Number: ${phoneNumber}\nType: ${type}`;
                             alert(userDetails);
                         } else {
                             alert('User data not found');
@@ -571,7 +571,7 @@ async function deleteRow(table, row) {
         let fullName;
         let email = '';
         if (userData) {
-            fullName = `${userData.firstname} ${userData.lastName}`;
+            fullName = `${userData.firstName} ${userData.lastName}`;
             email = userData.email || '';
         }
         userCell.innerHTML = `<span class="clickable-text">${fullName}</span>`;
@@ -597,8 +597,8 @@ async function deleteRow(table, row) {
         userCell.addEventListener('click', () => {
             const fullUserData = userDataMap.get(data.userid);
             if (fullUserData) {
-                const { firstname, lastName, phoneNumber, type } = fullUserData;
-                const userDetails = `Name: ${firstname} ${lastName}\nPhone Number: ${phoneNumber}\nType: ${type}`;
+                const { firstName, lastName, phoneNumber, type } = fullUserData;
+                const userDetails = `Name: ${firstName} ${lastName}\nPhone Number: ${phoneNumber}\nType: ${type}`;
                 alert(userDetails);
             } else {
                 alert('User data not found');
@@ -638,7 +638,7 @@ async function deleteRow(table, row) {
         let fullName;
         let email = '';
         if (userData) {
-            fullName = `${userData.firstname} ${userData.lastName}`;
+            fullName = `${userData.firstName} ${userData.lastName}`;
             email = userData.email || '';
         }
         userCell.innerHTML = `<span class="clickable-text">${fullName}</span>`;
@@ -657,8 +657,8 @@ async function deleteRow(table, row) {
         userCell.addEventListener('click', () => {
             const fullUserData = userDataMap.get(data.userid);
             if (fullUserData) {
-                const { firstname, lastName, phoneNumber, type } = fullUserData;
-                const userDetails = `Name: ${firstname} ${lastName}\nPhone Number: ${phoneNumber}\nType: ${type}`;
+                const { firstName, lastName, phoneNumber, type } = fullUserData;
+                const userDetails = `Name: ${firstName} ${lastName}\nPhone Number: ${phoneNumber}\nType: ${type}`;
                 alert(userDetails);
             } else {
                 alert('User data not found');
@@ -692,7 +692,7 @@ async function deleteRow(table, row) {
       window.location.href ='pL.html'
     
         else{
-          GreetHead.innerText = `Welcome ${UserInfo.firstname} ${UserInfo.lastName}!`;
+          GreetHead.innerText = `Welcome ${UserInfo.firstName} ${UserInfo.lastName}!`;
     MsgHead.innerText = `User with email "${UserCreds.email}" logged in`;
         }
     
