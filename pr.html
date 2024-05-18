@@ -92,7 +92,7 @@
                 <div class="profile-info">
                   
                     <p id="firstname"></p>
-                    <p id="lastName"></p>
+                    <p id="lastname"></p>
                     <p id="businessName"></p>
                     <p id="phone"></p>
                     <p id="email"></p>
@@ -283,7 +283,7 @@ document.getElementById('saveLocationBtn').addEventListener('click', () => {
         if (docSnap.exists()) {
             const userData = docSnap.data();
             document.getElementById('firstname').textContent = `First Name: ${userData.firstname}`;
-            document.getElementById('lastName').textContent = `Last Name: ${userData.lastName}`;
+            document.getElementById('lastname').textContent = `Last Name: ${userData.lastname}`;
             document.getElementById('businessName').textContent = `Business Name: ${userData.Businessname}`;
             document.getElementById('phone').textContent = `Phone: ${userData.phonenumber}`;
             document.getElementById('email').textContent = `Email: ${userData.email}`;
@@ -364,7 +364,7 @@ window.addEventListener('load', () => {
           window.location.href ='pL.html'
         
             else{
-              GreetHead.innerText = `Welcome ${UserInfo.firstname} ${UserInfo.lastName}!`;
+              GreetHead.innerText = `Welcome ${UserInfo.firstname} ${UserInfo.lastname}!`;
         MsgHead.innerText = `User with email "${UserCreds.email}" logged in`;
             }
         
