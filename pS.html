@@ -51,7 +51,7 @@
                     <i class="bx bx-user"></i>
                 </div>
                 <div class="input-box">
-                    <input type="text" class="input-field" placeholder="lastName" id="lastName" required />
+                    <input type="text" class="input-field" placeholder="lastname" id="lastname" required />
                     <i class="bx bx-user"></i>
                 </div>
 							<div class="input-box">
@@ -173,7 +173,7 @@
 
     let email= document.getElementById('em');
 let firstname = document.getElementById('firstname');
-let lastName= document.getElementById('lastName');
+let lastname= document.getElementById('lastname');
 let Businessname= document.getElementById('bn');
 let phonenumber= document.getElementById('ph');
 let password= document.getElementById('ps');
@@ -191,7 +191,7 @@ let RegisterUser = evt => {
         await setDoc(ref, {
             email: email.value,
             firstname: firstname.value,
-            lastName: lastName.value,
+            lastname: lastname.value,
             Businessname: Businessname.value,
             phonenumber: phonenumber.value,
             type: 'business',
